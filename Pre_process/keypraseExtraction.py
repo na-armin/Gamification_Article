@@ -1,5 +1,5 @@
 import RAKE
-def keyphrase_extract(text):
+def keyphrase_extract1(text):
     stop_dir = "../SmartStoplist.txt"
     rake_object = RAKE.Rake(stop_dir)
     # Extract keywords
@@ -18,18 +18,11 @@ def keyphrase_extract2(text):
 from keybert import KeyBERT
 def keyphrase_extract3(text):
     doc = text
-
-    kw_model = KeyBERT()
-    keywords = kw_model.extract_keywords(doc)
+    kw_model = KeyBERT(model='all-MiniLM-L6-v2')
+    keywords = kw_model.extract_keywords(doc,keyphrase_ngram_range=(1, 5), stop_words="english",top_n=5,)
     return keywords
-    print(kw_model.extract_keywords(doc, keyphrase_ngram_range=(1, 5), stop_words='English',top_n=10))
-    #[
-    #    ('learning', 0.4604),
-    #    ('algorithm', 0.4556),
-    #    ('training', 0.4487),
-    #    ('class', 0.4086),
-    #    ('mapping', 0.3700)
-    #]
+
+
 
 
 if __name__ == '__main__':
@@ -38,5 +31,9 @@ if __name__ == '__main__':
     to podcasts and subscribe to shows they like, and it already works on 
     your phone. Podcast production company Pacific Content got the exclusive 
     on it.This text is taken from Google news."""
-    keywords = keyphrase_extract(text)
-    print ("keywords: ", keywords)
+    keywords = keyphrase_extract1(text)
+    print ("keywords1: ", keywords)
+    keywords = keyphrase_extract2(text)
+    print("keywords2: ", keywords)
+    keywords = keyphrase_extract3(text)
+    print("keywords3: ", keywords)
