@@ -4,6 +4,8 @@ import time
 import pickle
 from pathlib import Path
 
+import pandas as pd
+
 import Common.doc
 from Common.show import show_text
 import Pre_process.keypraseExtraction as KE
@@ -16,58 +18,72 @@ def create_docs_from_json(_path, pickle_file):
         temp_doc = Common.doc.Doc(json_str['doc_id'], json_str['words'], json_str['sentences'], json_str['sections'],
                                   json_str['ner'],json_str['coref'])
         docs.append(temp_doc)
-        with open(pickle_file, 'wb') as f:
-            pickle.dump(docs, f)
+    with open(pickle_file, 'wb') as f:
+        pickle.dump(docs, f)
     return docs
 
 
 if __name__ == '__main__':
 
     Start_time = time.time()
+    # region Make Docs: Offline_phase
+    if Path("Docs_test").is_file() == False:
+        path = '../SciREX_dataset/test.jsonl'
+        docs = create_docs_from_json(path, "Docs_test")
 
-    # Make Docs: Offline_phase
-    if Path("Docs").is_file() == False:
-        path = '../SciREX_dataset/train.jsonl'
-        docs = create_docs_from_json(path, "Docs")
-
-    with open('Docs', 'rb') as f:
+    with open('Docs_test', 'rb') as f:
         docs = pickle.load(f)
+    # endregion Make Docs: Offline_phase
 
     print('time: ', time.time() - Start_time)
 
-    print("coref: ", docs[0].coref)
-    # Make Json File: input for game
-    ner=docs[0].ner.copy()
-    for n in docs[0].ner_with_diff_tag:
-        del ner[n]
-
+    # region Make Json File: input for game
     dictionary = {
         "doc_id": docs[0].doc_id,
         "title": docs[0].title,
         "category": "SciREX",
         "body": docs[0].body,
-        "ner": ner
+        "ner": docs[0].ner_without_diff_tag()
     }
-
     # Serializing json
     json_object = json.dumps(dictionary, indent=4)
-
     # Writing to sample.json
     with open("sample.json", "w") as outfile:
         outfile.write(json_object)
+    # endregin Make Json File: input for game
 
-    for d in docs[0].ner:
-        print(d, ":", docs[0].ner[d])
+    train=pd.DataFrame()
+    i=0
+    for _doc in docs:
+        df=_doc.make_sentence_label_X_Y()
+        train=train.append(df)
+        print(i ,":",_doc.doc_id)
+        i = i + 1
 
-    print("\nphrase_with_diff_tag_lengh: ", len(docs[0].ner_with_diff_tag))
-
-
-    # for p in docs[0].ner_with_diff_tag:  print(p, ": have diffrent tag", docs[0].ner[p])
+    print(train)
+    with open("test_data", 'wb') as f:
+        pickle.dump(train, f)
+    # for d in docs[0].ner:
+    #     print(d, ":", docs[0].ner[d])
+    #
+    # phrase_with_tag_lengh = 0
+    # for d in docs:
+    #     phrase_with_tag_lengh = phrase_with_tag_lengh + len(d.ner)
+    # print("\nphrase_with_tag: ", phrase_with_tag_lengh)
+    #
+    # phrase_with_diff_tag_lengh = 0
+    # for d in docs:
+    #     phrase_with_diff_tag_lengh = phrase_with_diff_tag_lengh+ len(d.ner_with_diff_tag_in_a_doc)
+    # print("\nphrase_with_diff_tag_lengh: ",phrase_with_diff_tag_lengh)
+    #
+    # print(len(docs))
+    #
+    # # for p in docs[0].ner_with_diff_tag:  print(p, ": have diffrent tag", docs[0].ner[p])
     # for ke in KE.keyphrase_extract1(docs[0].text):
     #     print(ke)
     #     if ke[1] < 5:
     #         break
-    #     # show_text(ke, 'blue')
+        # show_text(ke, 'blue')
     # for ke in KE.keyphrase_extract2(docs[0].text):
     #     print(ke)
     #     show_text(ke, 'blue')

@@ -18,9 +18,10 @@
 # TypedMention = Tuple[int, int, EntityType]
 # EntityType = Union["Method", "Metric", "Task", "Material"]
 # EntityName = str
+import numpy as np
+import pandas as pd
 
 class Doc:
-
 
     def make_body(self, _w, _sent, _sec):
         body = []
@@ -38,7 +39,7 @@ class Doc:
             start = end + 1
         return body
 
-    def find_index_in_body(self, start, end):
+    def find_index_of_word_in_body(self, _start, _end):
         sec_index = -1
         sent_index = -1
         ind_start = -1
@@ -46,11 +47,11 @@ class Doc:
         w_count = 0
         for sec_i, sec in enumerate(self.body):
             for sent_i, sent in enumerate(sec):
-                if w_count + len(sent) > start:
+                if w_count + len(sent) > _start:
                     sec_index = sec_i
                     sent_index = sent_i
-                    ind_start = start - w_count
-                    ind_end = end - w_count
+                    ind_start = _start - w_count
+                    ind_end = _end - w_count
                     break
                 w_count = w_count + len(sent)
             if sec_index > -1: break
@@ -58,40 +59,60 @@ class Doc:
 
     def make_ner_data(self, _ner):
         for n in _ner:
-            sec_index = -1
-            sent_index = -1
-            ner_start = -1
-            ner_end = -1
-            w_count = 0
-            for sec_i, sec in enumerate(self.body):
-                for sent_i, sent in enumerate(sec):
-                    if w_count + len(sent) > n[0]:
-                        sec_index = sec_i
-                        sent_index = sent_i
-                        ner_start = n[0] - w_count
-                        ner_end = n[1] - w_count
-                        break
-                    w_count = w_count + len(sent)
-                if sec_index > -1: break
-            new_n = [sec_index, sent_index, ner_start, ner_end, n[2]]
+            sec_index, sent_index, ner_start, ner_end = self.find_index_of_word_in_body(n[0], n[1])
             n_text = self.text_in_range(sec_index, sent_index, ner_start, ner_end)
             if n_text not in self.ner:
                 self.ner[n_text] = []
-            elif self.ner[n_text][-1][4] != new_n[4]:
-                self.ner_with_diff_tag.add(n_text)
-            self.ner[n_text].append(new_n)
+            elif self.ner[n_text][-1][4] != n[2]:
+                self.ner_with_diff_tag_in_a_doc.add(n_text)
+            self.ner[n_text].append([sec_index, sent_index, ner_start, ner_end, n[2]])
 
-    def __init__(self, _id=0, _w=[], _sent=[], _sec=[], _ner=[], coref=[], rel=[]):
+    def ner_without_diff_tag(self):
+        ner_temp=self.ner.copy()
+        for n in self.ner_with_diff_tag_in_a_doc:
+            del ner_temp[n]
+        return ner_temp
+
+    def make_sentence_label_X_Y(self):
+        error_num=0
+        x=self.body
+        y=[]
+        for sec in self.body:
+            sec_temp=[]
+            for sent in sec:
+                    sec_temp.append(["o"] * len(sent))
+            y.append(sec_temp)
+        ner=self.ner_without_diff_tag()
+        for n in ner:
+            for span_tag in ner[n]:
+                for i in range(span_tag[2],span_tag[3]):
+                    try:
+                        y[span_tag[0]][span_tag[1]][i]=span_tag[4]
+                    except:
+                        print(n, span_tag,x[span_tag[0]][span_tag[1]])
+
+        X=[]
+        Y=[]
+        for i_sec,sec in enumerate(self.body):
+            for i_sent,sent in enumerate(sec):
+                X.append(x[i_sec][i_sent])
+                Y.append(y[i_sec][i_sent])
+        data={'token': X,'label': Y}
+        df= pd.DataFrame(data=data)
+        return df
+
+    def __init__(self, _id=0, _w=[], _sent=[], _sec=[], _ner=[], _coref=[], rel=[]):
         # doc_id : str = Document Id as used by Semantic Scholar,
         self.doc_id = _id
         # body : List[List[List[str]]] = List of sec[List of sent[List of words in the sentence]]
         self.body = self.make_body(_w, _sent, _sec)
-        # ner : dic{phrase: List[TypedMention] = Typed Spans indexing into words indicating mentions}
-        self.ner = {}
-        self.ner_with_diff_tag = set()
+        # ner : dic {ner_text: List[TypedMention] = Typed Spans indexing into words indicating mentions}
+        # ner_with_diff_tag_in_a_doc : set {'ner_text',..}
+        self.ner = {}  # ner : dic {ner_text:[[sec_index, sent_index, ner_start, ner_end,ner_tag]..]}
+        self.ner_with_diff_tag_in_a_doc = set()
         self.make_ner_data(_ner)
 
-        self.coref = coref  # "coref" : Dict[EntityName, List[Span]] = Salient Entities in the document and mentions belonging to it,
+        self.coref = _coref  # "coref" : Dict[EntityName, List[Span]] = Salient Entities in the document and mentions belonging to it,
         # self.n_ary_relation = rel  # "n_ary_relations" : List[Dict[EntityType, EntityName]] = List of Relations where each Relation is a dictionary with 5 keys (Method, Metric, Task, Material, Score),
         # "method_subrelations" : Dict[EntityName, List[Tuple[Span, SubEntityName]]] = Each Methods may be subdivided into simpler submethods and Submenthods in coref array. For example, DLDL+VGG-Face is broken into two methods DLDL , VGG-Face.
 
@@ -109,16 +130,17 @@ class Doc:
             t = t + '\n'
         return t
 
-    def text_in_range(self, i, j, s, e):
-        text = ' '.join(self.body[i][j][s:e])
+    def text_in_range(self, sec_i, sent_i, s, e):
+        text = ' '.join(self.body[sec_i][sent_i][s:e])
         return text
 
-    def sec_text(self, _sent_index):
+    def text_in_sec(self, _sec_index):
         t = ''
-        for sent in self.body[_sent_index]:
+        for sent in self.body[_sec_index]:
             t = t + ' '.join(sent)
         t = t + '\n'
         return t
+
 
 
 if __name__ == '__main__':

@@ -1,3 +1,5 @@
+
+
 import RAKE
 def keyphrase_extract1(text):
     stop_dir = "../SmartStoplist.txt"
@@ -14,6 +16,7 @@ def keyphrase_extract2(text):
     keyword_extracted = rake_nltk_var.get_ranked_phrases()
     return keyword_extracted
 
+
 # script.py
 from keybert import KeyBERT
 def keyphrase_extract3(text):
@@ -21,8 +24,6 @@ def keyphrase_extract3(text):
     kw_model = KeyBERT(model='all-MiniLM-L6-v2')
     keywords = kw_model.extract_keywords(doc,keyphrase_ngram_range=(1, 5), stop_words="english",top_n=5,)
     return keywords
-
-
 
 
 if __name__ == '__main__':
