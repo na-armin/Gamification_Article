@@ -1,12 +1,21 @@
+import spacy
+# import spacy_dbpedia_spotlight
+spacy.cli.download("en_core_web_sm")
 
 
-import RAKE
+
 def keyphrase_extract1(text):
-    stop_dir = "../SmartStoplist.txt"
-    rake_object = RAKE.Rake(stop_dir)
-    # Extract keywords
-    keywords = rake_object.run(text)
-    return keywords
+    nlp = spacy.load('en_core_web_lg')
+    # add the pipeline stage
+    nlp.add_pipe('dbpedia_spotlight')
+    # get the document
+    doc = nlp(text)
+    #see the entities
+    # for ent in doc.ents:
+    #   print('Entities',ent, [(ent.text, ent.label_, ent.kb_id_)])
+    # inspect the raw data from DBpedia spotlight
+    # print(doc.ents[0]._.dbpedia_raw_result)
+    return doc.ents
 
 
 from rake_nltk import Rake

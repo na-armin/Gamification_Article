@@ -5,39 +5,26 @@ import pickle
 from pathlib import Path
 
 import pandas as pd
-
+import Common.Scirex_process as Sci_dataset
 import Common.doc
 from Common.show import show_text
 import Pre_process.keypraseExtraction as KE
-
-
-def create_docs_from_json(_path, pickle_file):
-    docs = []
-    for line in open(_path, 'r'):
-        json_str = json.loads(line)
-        temp_doc = Common.doc.Doc(json_str['doc_id'], json_str['words'], json_str['sentences'], json_str['sections'],
-                                  json_str['ner'],json_str['coref'])
-        docs.append(temp_doc)
-    with open(pickle_file, 'wb') as f:
-        pickle.dump(docs, f)
-    return docs
-
 
 if __name__ == '__main__':
 
     Start_time = time.time()
     # region Make Docs: Offline_phase
-    if Path("Docs_test").is_file() == False:
-        path = '../SciREX_dataset/test.jsonl'
-        docs = create_docs_from_json(path, "Docs_test")
 
-    with open('Docs_test', 'rb') as f:
-        docs = pickle.load(f)
+    Sci_dataset.Process_scirex("../SciREX_dataset/")
     # endregion Make Docs: Offline_phase
 
     print('time: ', time.time() - Start_time)
 
+    with open('Docs_train', 'rb') as f:
+        docs = pickle.load(f)
+
     # region Make Json File: input for game
+
     dictionary = {
         "doc_id": docs[0].doc_id,
         "title": docs[0].title,
@@ -54,13 +41,16 @@ if __name__ == '__main__':
 
     train=pd.DataFrame()
     i=0
+    max_seq_length=0
     for _doc in docs:
-        df=_doc.make_sentence_label_X_Y()
+        df,max_seq_len=_doc.make_sentence_label_X_Y()
+        if max_seq_len>max_seq_length:
+            max_seq_length=max_seq_len
         train=train.append(df)
         print(i ,":",_doc.doc_id)
         i = i + 1
-
-    print(train)
+    print("max_seq_length :",max_seq_length)
+    print(train.token)
     with open("test_data", 'wb') as f:
         pickle.dump(train, f)
     # for d in docs[0].ner:
