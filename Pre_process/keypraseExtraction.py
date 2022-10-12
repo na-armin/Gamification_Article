@@ -1,7 +1,5 @@
 import spacy
 # import spacy_dbpedia_spotlight
-spacy.cli.download("en_core_web_sm")
-
 
 
 def keyphrase_extract1(text):

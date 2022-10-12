@@ -1,15 +1,14 @@
-
 import numpy as np
 import pandas as pd
+import Common.show as sh
 
 class Doc:
 
-
-    def __init__(self, _id=0, _body=[], _ner={}, _ner_with_diff_tag_in_a_doc={}, _coref=[], rel=[]):
+    def __init__(self, _id=0, _body=[], _ner={}, _ner_with_diff_tag_in_a_doc={}, _coref=[]):
         # doc_id : str
         self.doc_id = _id
         # body : List[List[List[str]]] = List of sec[List of sent[List of words in the sentence]]
-        self.body =_body
+        self.body = _body
         # ner : dic {ner_text:[[sec_index, sent_index, ner_start, ner_end,ner_tag]..]}
         self.ner = _ner
 
@@ -18,6 +17,7 @@ class Doc:
 
         # "coref" : Dict[EntityName, List[Span]] = Salient Entities in the document and mentions belonging to it,
         self.coref = _coref
+
     @property
     def title(self):
         title = ' '.join(self.body[0][0])
@@ -48,6 +48,7 @@ class Doc:
         for n in self.ner_with_diff_tag_in_a_doc:
             del ner_temp[n]
         return ner_temp
+
     def make_sentence_label_X_Y(self):
         x = self.body
         y = []
@@ -77,5 +78,19 @@ class Doc:
         data = {'token': X, 'label': Y}
         df = pd.DataFrame(data=data)
         return df, max_seq_length
+
+    def print_text(self,entitys):
+        t = ''
+        for sec in self.body:
+            for sent in sec:
+                for w in sent:
+
+                    if w in entitys:
+                        t = t + ' '+sh.colored_text(w,'blue')
+                    else:
+                        t = t + ' '+w
+            t = t + '\n'
+        print(t)
+        return
 if __name__ == '__main__':
     a = Doc()

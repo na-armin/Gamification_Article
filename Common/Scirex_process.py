@@ -3,7 +3,7 @@ import Common.doc
 import pickle
 from pathlib import Path
 
-
+# des_path="../data/"
 def make_body(_w, _sent, _sec):
     body = []
     start = 0
@@ -21,13 +21,13 @@ def make_body(_w, _sent, _sec):
     return body
 
 
-def find_index_of_word_in_body(self, _start, _end):
+def find_index_of_word_in_body(body, _start, _end):
     sec_index = -1
     sent_index = -1
     ind_start = -1
     ind_end = -1
     w_count = 0
-    for sec_i, sec in enumerate(self.body):
+    for sec_i, sec in enumerate(body):
         for sent_i, sent in enumerate(sec):
             if w_count + len(sent) > _start:
                 sec_index = sec_i
@@ -44,7 +44,7 @@ def make_ner_data(_ner,body):
     ner = {}  # ner : dic {ner_text:[[sec_index, sent_index, ner_start, ner_end,ner_tag]..]}
     ner_with_diff_tag_in_a_doc = set()
     for n in _ner:
-        sec_index, sent_index, ner_start, ner_end = find_index_of_word_in_body(n[0], n[1])
+        sec_index, sent_index, ner_start, ner_end = find_index_of_word_in_body(body,n[0], n[1])
         n_text = ' '.join(body[sec_index][sent_index][ner_start:ner_end])
         if n_text not in ner:
             ner[n_text] = []
