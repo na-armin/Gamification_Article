@@ -49,6 +49,14 @@ class Doc:
             del ner_temp[n]
         return ner_temp
 
+    def clean_ner(self):
+        ner_temp = self.ner_without_diff_tag()
+        for n in ner_temp:
+            if
+
+        return ner_temp
+
+
     def make_sentence_label_X_Y(self):
         x = self.body
         y = []
@@ -84,8 +92,7 @@ class Doc:
         for sec in self.body:
             for sent in sec:
                 for w in sent:
-
-                    if w in entitys:
+                    if any(w in s for s in entitys):
                         t = t + ' '+sh.colored_text(w,'blue')
                     else:
                         t = t + ' '+w

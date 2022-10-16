@@ -51,21 +51,24 @@ if __name__ == '__main__':
     # print(train.token)
     # with open("test_data", 'wb') as f:
     #     pickle.dump(train, f)
-    docs[0].print_text(docs[0].ner_without_diff_tag())
+    # docs[0].print_text(docs[0].ner_without_diff_tag())
+
     ents = KE.keyphrase_extract1(docs[0].text)
 
     i = 0
     for ent in ents:
-        print('Entities :', ent, [(ent.text, ent.label_, ent.kb_id_)])
+        print('Entities :', ent, [(ent.text, ent.kb_id_)])
+        print(ent._.dbpedia_raw_result['@similarityScore'])
         i = i + 1
     print(i, "entity in the text")
     print("---------------------")
     i = 0
     for ne in docs[0].ner_without_diff_tag():
-        print("ne in fie: ",ne)
+        print("ne in: ",ne)
         for ent in ents:
             if ne ==ent.text:
-                print(ent.text, ent.label_, ent.kb_id_, ne)
+                print(ent.text, ent.kb_id_)
+                print(ent._.dbpedia_raw_result['@similarityScore'])
                 i = i + 1
                 break
     print(i, "entity in the text")

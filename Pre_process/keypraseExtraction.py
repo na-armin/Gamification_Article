@@ -1,5 +1,5 @@
 import spacy
-# import spacy_dbpedia_spotlight
+import spacy_dbpedia_spotlight
 
 
 def keyphrase_extract1(text):
