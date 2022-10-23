@@ -1,6 +1,7 @@
-import numpy as np
+import spacy
 import pandas as pd
 import Common.show as sh
+# from spacy.matcher import Matcher
 
 class Doc:
 
@@ -49,11 +50,38 @@ class Doc:
             del ner_temp[n]
         return ner_temp
 
-    def clean_ner(self):
-        ner_temp = self.ner_without_diff_tag()
-        for n in ner_temp:
-            if
+    import spacy  # load spacy
+    nlp = spacy.load("en_core_web_lg", disable=['parser', 'tagger', 'ner'])
+    # stops = stopwords.words("english")
+    def normalize(comment, lowercase, remove_stopwords):
+        if lowercase:
+            comment = comment.lower()
+        comment = nlp(comment)
+        lemmatized = list()
+        for word in comment:
+            lemma = word.lemma_.strip()
+            if lemma:
+                if not remove_stopwords or (remove_stopwords and lemma.is_stop):
+                    lemmatized.append(lemma)
+        return " ".join(lemmatized)
 
+    def clean_ner(self):
+        # nlp = spacy.load("en_core_sci_scibert")
+        nlp = spacy.load('en_core_web_lg')
+        ner_temp = self.ner_without_diff_tag()
+        keys=list(ner_temp.keys())
+        cluster=list(range(len(keys)))
+
+        for i in range(len(keys)):
+            if i==cluster[i]:
+                n1 = nlp(keys[i].lower())
+                print(keys[i], " : ")
+                for j in range(i+1,len(keys)):
+                    n2 = nlp(keys[j].lower())
+                    sim=n1.similarity(n2)
+                    if sim > 0.90:
+                        print(keys[j],sim)
+                        cluster[j]=i
         return ner_temp
 
 
@@ -99,5 +127,33 @@ class Doc:
             t = t + '\n'
         print(t)
         return
+
+
 if __name__ == '__main__':
-    a = Doc()
+    nlp = spacy.load("en_core_web_lg")
+
+    # # m_tool = Matcher(nlp.vocab)
+    #
+    # p1 = [
+    #     [{'TAG': 'NOUN'}, {'TAG': 'NOUN'}],
+    #     [{'TAG': 'NOUN'}, {"IS_PUNCT": True}, {'TAG': 'NOUN'}]]
+    #     # add more if required
+    # m_tool.add('QBF', p1)
+    # sentence = nlp(u'feed forward   feed-forward   feedforward')
+    # print(sentence.vocab.get_noun_chunks)
+    # phrase_matches = m_tool(sentence)
+    # print(phrase_matches)
+    # for match_id, start, end in phrase_matches:
+    #     string_id = nlp.vocab.strings[match_id]
+    #     span = sentence[start:end]
+    #     print("HHHHHHHH",match_id, string_id, start, end, span.text)
+    n1 = nlp("feed forward")
+    # print(n1.vector)
+    n2 = nlp("feed-forward")
+    # print(n1.vector)
+    n3 = nlp("feedforward")
+    # print(n1.vector)
+
+    print(n1.similarity(n2))
+    print(n2.similarity(n3))
+    print(n1.similarity(n3))

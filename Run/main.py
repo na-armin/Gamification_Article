@@ -53,25 +53,29 @@ if __name__ == '__main__':
     #     pickle.dump(train, f)
     # docs[0].print_text(docs[0].ner_without_diff_tag())
 
-    ents = KE.keyphrase_extract1(docs[0].text)
+    # ents = KE.keyphrase_extract1(docs[0].text)
 
-    i = 0
-    for ent in ents:
-        print('Entities :', ent, [(ent.text, ent.kb_id_)])
-        print(ent._.dbpedia_raw_result['@similarityScore'])
-        i = i + 1
-    print(i, "entity in the text")
-    print("---------------------")
-    i = 0
-    for ne in docs[0].ner_without_diff_tag():
-        print("ne in: ",ne)
-        for ent in ents:
-            if ne ==ent.text:
-                print(ent.text, ent.kb_id_)
-                print(ent._.dbpedia_raw_result['@similarityScore'])
-                i = i + 1
-                break
-    print(i, "entity in the text")
+    # print("Size of entity find in doc: ", len(ents))
+    print("Size of ner find in doc:" , len(docs[0].ner_without_diff_tag()))
+    # i = 0
+    # for ent in ents:
+    #     # print('Entities :', ent, [(ent.text, ent.kb_id_)])
+    #     # print(ent._.dbpedia_raw_result['@similarityScore'])
+    #     i = i + 1
+    # print(i, "entity in the text")
+    # print("---------------------")
+    # i = 0
+    # for ne in docs[0].ner_without_diff_tag():
+    #     # print("ne in: ",ne)
+    #     for ent in ents:
+    #         if ne.lower() ==ent.text.lower():
+    #             # print(ent.text, ent.kb_id_)
+    #             # print(ent._.dbpedia_raw_result['@similarityScore'])
+    #             i = i + 1
+    #             break
+    # print(i, "entity in the text")
+
+    docs[0].clean_ner()
     # for ke in KE.keyphrase_extract3(docs[0].text):
     #     print(ke)
     #     show_text(ke, 'blue')

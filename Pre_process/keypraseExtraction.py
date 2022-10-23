@@ -3,7 +3,7 @@ import spacy_dbpedia_spotlight
 
 
 def keyphrase_extract1(text):
-    nlp = spacy.load('en_core_web_lg')
+    nlp = spacy.load('C:\Users\Armin\Downloads\en_core_sci_scibert-0.5.1.tar.gz')
     # add the pipeline stage
     nlp.add_pipe('dbpedia_spotlight')
     # get the document
